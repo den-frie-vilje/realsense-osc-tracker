@@ -82,7 +82,7 @@ void ofApp::setup(){
     } catch (exception e){
         ofLogError("SETUP", "No realsense camera found");
     }
-    
+
 }
 
 //--------------------------------------------------------------
@@ -126,6 +126,7 @@ void ofApp::update(){
 //--------------------------------------------------------------
 void ofApp::draw(){
     cam.begin();
+    ofScale(ofGetWidth());
     trackingMesh.draw();
     cam.end();
 }
