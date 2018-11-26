@@ -48,4 +48,6 @@ class ofApp : public ofBaseApp{
     // ofxCv::KalmanPosition trackingKalman;
     // MeshTracker tracker;
     
+    ofEasyCam cam; // add mouse controls for camera movement
+    
 };

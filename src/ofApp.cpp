@@ -2,9 +2,9 @@
 
 //--------------------------------------------------------------
 void ofApp::setup(){
-
+    
     trackingMesh.setMode(OF_PRIMITIVE_POINTS);
-
+    
     rs2::config cfg;
     
     cfg.enable_stream(RS2_STREAM_DEPTH, 848, 480, RS2_FORMAT_ANY, 60);
@@ -76,7 +76,7 @@ void ofApp::setup(){
         temp_filter.set_option(RS2_OPTION_FILTER_SMOOTH_ALPHA, 0.1f);
         temp_filter.set_option(RS2_OPTION_FILTER_SMOOTH_DELTA, 65.0f);
         temp_filter.set_option(RS2_OPTION_HOLES_FILL, 7);
-
+        
         
         
     } catch (exception e){
@@ -87,65 +87,100 @@ void ofApp::setup(){
 
 //--------------------------------------------------------------
 void ofApp::update(){
-
+    
+    
+    // Get depth data from camera
+    auto frames = pipe.wait_for_frames();
+    auto depthFrame = frames.get_depth_frame();
+    
+    rs2::frame filteredFrame = depthFrame; // make a copy
+    // Note the concatenation of output/input frame to build up a chain
+    filteredFrame = dec_filter.process(filteredFrame);
+    filteredFrame = spat_filter.process(filteredFrame);
+    filteredFrame = temp_filter.process(filteredFrame);
+    
+    points = pc.calculate(filteredFrame);
+    
+    // Create oF mesh
+    trackingMesh.clear();
+    
+    int numberPoints = points.size();
+    
+    if(numberPoints!=0){
+        // get a pointer to the vertice array
+        const rs2::vertex * vs = points.get_vertices();
+        
+        for(int i=0; i<numberPoints; i++){
+            if(vs[i].z>0.5){ // save time on skipping the closest ones
+                const rs2::vertex v = vs[i];
+                glm::vec3 v3(v.x,v.y,v.z);
+                trackingMesh.addVertex(v3);
+                trackingMesh.addColor(ofFloatColor::blueSteel);
+            }
+        }
+        
+    }
+    
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-
+    cam.begin();
+    trackingMesh.draw();
+    cam.end();
 }
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
-
+    
 }
 
 //--------------------------------------------------------------
 void ofApp::keyReleased(int key){
-
+    
 }
 
 //--------------------------------------------------------------
 void ofApp::mouseMoved(int x, int y ){
-
+    
 }
 
 //--------------------------------------------------------------
 void ofApp::mouseDragged(int x, int y, int button){
-
+    
 }
 
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button){
-
+    
 }
 
 //--------------------------------------------------------------
 void ofApp::mouseReleased(int x, int y, int button){
-
+    
 }
 
 //--------------------------------------------------------------
 void ofApp::mouseEntered(int x, int y){
-
+    
 }
 
 //--------------------------------------------------------------
 void ofApp::mouseExited(int x, int y){
-
+    
 }
 
 //--------------------------------------------------------------
 void ofApp::windowResized(int w, int h){
-
+    
 }
 
 //--------------------------------------------------------------
 void ofApp::gotMessage(ofMessage msg){
-
+    
 }
 
 //--------------------------------------------------------------
 void ofApp::dragEvent(ofDragInfo dragInfo){ 
-
+    
 }
