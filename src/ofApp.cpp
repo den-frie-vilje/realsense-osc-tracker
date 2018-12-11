@@ -93,6 +93,9 @@ void ofApp::setup(){
     
     //GUI
     
+    cam.setFarClip(50000.0);
+    //cam.setNearClip(0.01);
+    
     ofAddListener(ofGetWindowPtr()->events().keyPressed, this,
                   &ofApp::keycodePressed);
     
@@ -160,15 +163,26 @@ void ofApp::setup(){
     style.Colors[ImGuiCol_PlotHistogramHovered]  = ImVec4(1.00f, 0.60f, 0.00f, 1.00f);
     style.Colors[ImGuiCol_TextSelectedBg]        = ImVec4(0.00f, 0.56f, 1.00f, 0.35f);
     style.Colors[ImGuiCol_ModalWindowDarkening]  = ImVec4(0.20f, 0.20f, 0.20f, 0.35f);
-
+    
+    // PARAMETERS
+    
     load("default");
     
+    // MESH TRACKER
+    
+    trackingCamera.setParent(origin);
+    trackingCamera.setupPerspective();
+    // realsense camera frustrum
+    trackingCamera.setAspectRatio(848.0/480.0);
+    trackingCamera.setFov(86.0);
+    trackingCamera.setNearClip(0.1);
+    trackingCamera.setFarClip(50.0);
+    tracker.setup(3, pTrackingStartPosition, trackingCamera, origin );
     
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
-    
     
     // Get depth data from camera
     auto frames = pipe.wait_for_frames();
@@ -182,25 +196,61 @@ void ofApp::update(){
     
     points = pc.calculate(filteredFrame);
     
+    //TRACKER
+    trackingCamera.setPosition(pTrackingCameraPosition);
+    trackingCamera.setOrientation(pTrackingCameraRotation);
+    tracker.setPosition(pTrackingBoxPosition);
+    tracker.setOrientation(pTrackingBoxRotation);
+    tracker.set(pTrackingBoxSize.get().x, pTrackingBoxSize.get().y, pTrackingBoxSize.get().z);
+    tracker.startingPoint.setGlobalPosition(pTrackingStartPosition);
+    tracker.camera.setGlobalPosition(trackingCamera.getGlobalPosition());
+    tracker.camera.setGlobalOrientation(trackingCamera.getGlobalOrientation());
+    tracker.camera.setScale(trackingCamera.getScale());
+    
+    const auto cameraGlobalMat = trackingCamera.getGlobalTransformMatrix();
+    const auto trackerInverse = glm::inverse(tracker.getGlobalTransformMatrix());
+    
+    
     // Create oF mesh
     trackingMesh.clear();
-    
-    int numberPoints = points.size();
-    
-    if(numberPoints!=0){
-        // get a pointer to the vertice array
+    int n = points.size();
+    if(n>0){
         const rs2::vertex * vs = points.get_vertices();
-        
-        for(int i=0; i<numberPoints; i++){
+        for(int i=0; i<n; i++){
             if(vs[i].z>0.5){ // save time on skipping the closest ones
                 const rs2::vertex v = vs[i];
-                glm::vec3 v3(v.x,v.y,v.z);
-                trackingMesh.addVertex(v3);
-                trackingMesh.addColor(ofFloatColor::ghostWhite);
+                glm::vec3 v3(v.x,-v.y,-v.z);
+                glm::vec4 cameraVec(v3, 1.0);
+                glm::vec4 globalVec = cameraGlobalMat * cameraVec;
                 
+                auto inversedVec = trackerInverse * globalVec;
+                glm::vec3 trackerVec = glm::vec3(inversedVec) / inversedVec.w;
+                
+                if(fabs(trackerVec.x) < tracker.getWidth()/2.0 &&
+                   fabs(trackerVec.y) < tracker.getHeight()/2.0 &&
+                   fabs(trackerVec.z) < tracker.getDepth()/2.0){
+                    
+                    int wasAdded = tracker.addVertex(v3);
+                    
+                    trackingMesh.addVertex(v3);
+                    
+                    ofFloatColor c;
+                    if(wasAdded == 0){
+                        c = ofFloatColor::lightGray;
+                    } else if (wasAdded == 1){
+                        c = ofFloatColor::cyan;
+                    } else if (wasAdded == 2){
+                        c= ofFloatColor::green;
+                    } else if (wasAdded == 3){
+                        c = ofFloatColor::blueSteel;
+                    }
+                    
+                    trackingMesh.addColor(c);
+                    
+                }
             }
         }
-        
+        tracker.update();
     }
     
 }
@@ -210,8 +260,16 @@ void ofApp::draw(){
     ofBackground(33);
     cam.begin();
     ofScale(ofGetWidth());
-    trackingMesh.draw();
     ofDrawAxis(1.0);
+    ofSetColor(255, 64);
+    ofEnableDepthTest();
+    trackingCamera.transformGL();
+    ofDrawAxis(0.1);
+    trackingMesh.draw();
+    trackingCamera.restoreTransformGL();
+    trackingCamera.drawFrustum();
+    tracker.draw();
+
     cam.end();
     
     // GUI
@@ -224,7 +282,7 @@ void ofApp::draw(){
     } else {
         cam.enableMouseInput();
     }
-
+    
     
 }
 
@@ -333,7 +391,7 @@ bool ofApp::imGui()
             ImGui::PopStyleVar();
             ImGui::Columns(1);
             
-             
+            
             ImGui::Separator();
             
             if(ImGui::Button("Load")){
@@ -350,7 +408,7 @@ bool ofApp::imGui()
              */
             
             ImGui::Separator();
-
+            
             
             ofxImGui::AddGroup(pgRoot, mainSettings);
             

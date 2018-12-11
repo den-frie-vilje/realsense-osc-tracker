@@ -3,6 +3,8 @@
 #include "ofMain.h"
 #include <librealsense2/rs.hpp>
 #include "ofxImGui.h"
+#include "ofxCv.h"
+#include "MeshTracker.hpp"
 
 class ofApp : public ofBaseApp{
     
@@ -42,8 +44,13 @@ public:
     rs2::points points;
     rs2::pointcloud pc;
     
+    ofNode origin;
+    
     ofMesh trackingMesh;
     
+    ofCamera trackingCamera;
+    
+    MeshTracker tracker;
     
     // ofCamera trackingCamera;
     
@@ -69,8 +76,8 @@ public:
     
     // PARAMETER
     
-    ofParameter<bool> pTrackingEnabled{ "Enabled", false};
-    ofParameter<bool> pTrackingVisible{ "Visible", false};
+//    ofParameter<bool> pTrackingEnabled{ "Enabled", false};
+//    ofParameter<bool> pTrackingVisible{ "Visible", false};
     ofParameter<float> pTrackingTimeout{ "Timeout", 30.0, 0.0, 5*60.0};
     
     ofParameter<glm::vec3> pTrackingStartPosition{ "Start Position", glm::vec3(0.,0.,0.), glm::vec3(-10.,-10.,-10.), glm::vec3(10.,10.,10.)};
@@ -82,6 +89,6 @@ public:
     ofParameter<glm::vec3> pTrackingBoxRotation{ "Tracking Box Rotation", glm::vec3(0.,0.,0.), glm::vec3(-180.,-180.,-180.), glm::vec3(180.,180.,180.)};
     ofParameter<glm::vec3> pTrackingBoxSize{ "Tracking Box Size", glm::vec3(1.,1.,1.), glm::vec3(0.,0.,0.), glm::vec3(10.,10.,10.)};
     
-    ofParameterGroup pgRoot{"Tracking", pTrackingEnabled, pTrackingVisible, pTrackingTimeout, pTrackingCameraPosition, pTrackingCameraRotation, pTrackingBoxPosition, pTrackingBoxRotation, pTrackingBoxSize, pTrackingStartPosition};
+    ofParameterGroup pgRoot{"Tracking", pTrackingTimeout, pTrackingCameraPosition, pTrackingCameraRotation, pTrackingBoxPosition, pTrackingBoxRotation, pTrackingBoxSize, pTrackingStartPosition};
     
 };
