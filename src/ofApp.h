@@ -2,6 +2,8 @@
 
 #include "ofMain.h"
 #include <librealsense2/rs.hpp>
+#include "ofxImGui.h"
+
 
 
 class ofApp : public ofBaseApp{
@@ -49,5 +51,38 @@ class ofApp : public ofBaseApp{
     // MeshTracker tracker;
     
     ofEasyCam cam; // add mouse controls for camera movement
+    
+    // GUI
+    
+    bool imGui();
+    ofxImGui::Gui gui;
+    string title = "Øresund Bridge";
+    bool guiVisible = true;
+    bool mouseOverGui;
+    int guiColumnWidth = 250;
+    ImFont* gui_font_header;
+    ImFont* gui_font_text;
+    ofImage logo;
+    GLuint logoID;
+    
+    ofTrueTypeFont fontHeader;
+    ofTrueTypeFont fontBody;
+    
+    // PARAMETER
+    
+    ofParameter<bool> pTrackingEnabled{ "Enabled", false};
+    ofParameter<bool> pTrackingVisible{ "Visible", false};
+    ofParameter<float> pTrackingTimeout{ "Timeout", 30.0, 0.0, 5*60.0};
+
+    ofParameter<glm::vec3> pTrackingStartPosition{ "Start Position", glm::vec3(0.,0.,0.), glm::vec3(-10.,-10.,-10.), glm::vec3(10.,10.,10.)};
+
+    ofParameter<glm::vec3> pTrackingCameraPosition{ "Tracking Camera Position", glm::vec3(0.,0.,0.), glm::vec3(-10.,-10.,-10.), glm::vec3(10.,10.,10.)};
+    ofParameter<glm::vec3> pTrackingCameraRotation{ "Tracking Camera Rotation", glm::vec3(0.,0.,0.), glm::vec3(-180.,-180.,-180.), glm::vec3(180.,180.,180.)};
+    
+    ofParameter<glm::vec3> pTrackingBoxPosition{ "Tracking Box Position", glm::vec3(0.,0.,0.), glm::vec3(-10.,-10.,-10.), glm::vec3(10.,10.,10.)};
+    ofParameter<glm::vec3> pTrackingBoxRotation{ "Tracking Box Rotation", glm::vec3(0.,0.,0.), glm::vec3(-180.,-180.,-180.), glm::vec3(180.,180.,180.)};
+    ofParameter<glm::vec3> pTrackingBoxSize{ "Tracking Box Size", glm::vec3(1.,1.,1.), glm::vec3(0.,0.,0.), glm::vec3(10.,10.,10.)};
+    
+    ofParameterGroup pgRoot{"Tracking", pTrackingEnabled, pTrackingVisible, pTrackingTimeout, pTrackingCameraPosition, pTrackingCameraRotation, pTrackingBoxPosition, pTrackingBoxRotation, pTrackingBoxSize, pTrackingStartPosition};
     
 };
