@@ -3,11 +3,18 @@
 //--------------------------------------------------------------
 void ofApp::setup(){
     
+    ofSetFrameRate(60);
+    ofSetVerticalSync(true);
+    //ofDisableLighting(); eller ofEnableLighting();?
+    
+    
     trackingMesh.setMode(OF_PRIMITIVE_POINTS);
     
     rs2::config cfg;
     
-    cfg.enable_stream(RS2_STREAM_DEPTH, 848, 480, RS2_FORMAT_ANY, 60);
+
+        cfg.enable_stream(RS2_STREAM_DEPTH, 848, 480, RS2_FORMAT_ANY, 60);
+
     
     try {
         
@@ -115,7 +122,8 @@ void ofApp::update(){
                 const rs2::vertex v = vs[i];
                 glm::vec3 v3(v.x,v.y,v.z);
                 trackingMesh.addVertex(v3);
-                trackingMesh.addColor(ofFloatColor::blueSteel);
+                trackingMesh.addColor(ofFloatColor::ghostWhite);
+                
             }
         }
         
@@ -125,9 +133,11 @@ void ofApp::update(){
 
 //--------------------------------------------------------------
 void ofApp::draw(){
+    ofBackground(33);
     cam.begin();
     ofScale(ofGetWidth());
     trackingMesh.draw();
+    ofDrawAxis(1.0);
     cam.end();
 }
 
