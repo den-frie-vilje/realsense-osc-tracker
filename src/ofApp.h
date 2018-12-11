@@ -4,27 +4,27 @@
 #include <librealsense2/rs.hpp>
 #include "ofxImGui.h"
 
-
-
 class ofApp : public ofBaseApp{
-
-	public:
-		void setup();
-		void update();
-		void draw();
-
-		void keyPressed(int key);
-		void keyReleased(int key);
-		void mouseMoved(int x, int y );
-		void mouseDragged(int x, int y, int button);
-		void mousePressed(int x, int y, int button);
-		void mouseReleased(int x, int y, int button);
-		void mouseEntered(int x, int y);
-		void mouseExited(int x, int y);
-		void windowResized(int w, int h);
-		void dragEvent(ofDragInfo dragInfo);
-		void gotMessage(ofMessage msg);
-		
+    
+public:
+    void setup();
+    void update();
+    void draw();
+    
+    void keyPressed(int key);
+    void keyReleased(int key);
+    void mouseMoved(int x, int y );
+    void mouseDragged(int x, int y, int button);
+    void mousePressed(int x, int y, int button);
+    void mouseReleased(int x, int y, int button);
+    void mouseEntered(int x, int y);
+    void mouseExited(int x, int y);
+    void windowResized(int w, int h);
+    void dragEvent(ofDragInfo dragInfo);
+    void gotMessage(ofMessage msg);
+    void keycodePressed(ofKeyEventArgs& e);
+    
+    
     // TRACKING
     
     rs2::pipeline pipe;
@@ -56,8 +56,7 @@ class ofApp : public ofBaseApp{
     
     bool imGui();
     ofxImGui::Gui gui;
-    string title = "Øresund Bridge";
-    bool guiVisible = true;
+    string title = "Realsense Osc Tracker";
     bool mouseOverGui;
     int guiColumnWidth = 250;
     ImFont* gui_font_header;
@@ -65,17 +64,17 @@ class ofApp : public ofBaseApp{
     ofImage logo;
     GLuint logoID;
     
-    ofTrueTypeFont fontHeader;
-    ofTrueTypeFont fontBody;
+    void save(string name);
+    void load(string name);
     
     // PARAMETER
     
     ofParameter<bool> pTrackingEnabled{ "Enabled", false};
     ofParameter<bool> pTrackingVisible{ "Visible", false};
     ofParameter<float> pTrackingTimeout{ "Timeout", 30.0, 0.0, 5*60.0};
-
+    
     ofParameter<glm::vec3> pTrackingStartPosition{ "Start Position", glm::vec3(0.,0.,0.), glm::vec3(-10.,-10.,-10.), glm::vec3(10.,10.,10.)};
-
+    
     ofParameter<glm::vec3> pTrackingCameraPosition{ "Tracking Camera Position", glm::vec3(0.,0.,0.), glm::vec3(-10.,-10.,-10.), glm::vec3(10.,10.,10.)};
     ofParameter<glm::vec3> pTrackingCameraRotation{ "Tracking Camera Rotation", glm::vec3(0.,0.,0.), glm::vec3(-180.,-180.,-180.), glm::vec3(180.,180.,180.)};
     
