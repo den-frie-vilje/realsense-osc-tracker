@@ -98,7 +98,7 @@ void ofApp::setup(){
     
     ofAddListener(ofGetWindowPtr()->events().keyPressed, this,
                   &ofApp::keycodePressed);
-    
+
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
     gui_font_text = io.Fonts->AddFontFromFileTTF(ofToDataPath("fonts/OpenSans-Regular.ttf").c_str(), 16.0f);
@@ -179,6 +179,8 @@ void ofApp::setup(){
     trackingCamera.setFarClip(50.0);
     tracker.setup(3, pTrackingStartPosition, trackingCamera, origin );
     
+
+    
 }
 
 //--------------------------------------------------------------
@@ -199,8 +201,8 @@ void ofApp::update(){
     //TRACKER
     trackingCamera.setPosition(pTrackingCameraPosition);
     trackingCamera.setOrientation(pTrackingCameraRotation);
-    tracker.setPosition(pTrackingBoxPosition);
     tracker.setOrientation(pTrackingBoxRotation);
+    tracker.setPosition(pTrackingBoxPosition);
     tracker.set(pTrackingBoxSize.get().x, pTrackingBoxSize.get().y, pTrackingBoxSize.get().z);
     tracker.startingPoint.setGlobalPosition(pTrackingStartPosition);
     tracker.camera.setGlobalPosition(trackingCamera.getGlobalPosition());
@@ -209,6 +211,31 @@ void ofApp::update(){
     
     const auto cameraGlobalMat = trackingCamera.getGlobalTransformMatrix();
     const auto trackerInverse = glm::inverse(tracker.getGlobalTransformMatrix());
+    
+    
+    
+    
+    //setting the parameters for the plane
+    floorPlane.set(10.24, 7.20);   ///dimensions for width and height in pixels
+    floorPlane.setOrientation(glm::vec3(90.,0.,0.));
+    floorPlane.setPosition(pFloorPlanePosition); /// position in x y z
+    floorPlane.setResolution(2, 2);
+    
+    
+    wallNegPlane.set(5,5);
+    wallNegPlane.setOrientation(glm::vec3(0.,90.,0.));
+    wallNegPlane.setPosition(pWallNegXPlanePosition);
+    wallNegPlane.setResolution(2, 2);
+    
+    wallPosPlane.set(5,5);
+    wallPosPlane.setOrientation(glm::vec3(0.,90.,0.));
+    wallPosPlane.setPosition(pWallPosXPlanePosition);
+    wallPosPlane.setResolution(2, 2);
+    
+    backWallPlane.set(10.14,7.20);
+    backWallPlane.setOrientation(glm::vec3(0.,0.,0.));
+    backWallPlane.setPosition(pBackWallPlane);
+    wallNegPlane.setResolution(2, 2);
     
     
     // Create oF mesh
@@ -259,18 +286,24 @@ void ofApp::update(){
 void ofApp::draw(){
     ofBackground(33);
     cam.begin();
-    ofScale(ofGetWidth());
-    ofDrawAxis(1.0);
+    ofScale(ofGetWidth());  //1024 pixels
+    ofDrawAxis(1.0); //Global axis
     ofSetColor(255, 64);
     ofEnableDepthTest();
     trackingCamera.transformGL();
-    ofDrawAxis(0.1);
     trackingMesh.draw();
     trackingCamera.restoreTransformGL();
     trackingCamera.drawFrustum();
     tracker.draw();
+    ofSetColor(100, 100);
+    floorPlane.draw();
+    wallNegPlane.draw();
+    wallPosPlane.draw();
+    backWallPlane.draw();
 
     cam.end();
+    
+    
     
     // GUI
     ofEnableBlendMode(OF_BLENDMODE_ALPHA);

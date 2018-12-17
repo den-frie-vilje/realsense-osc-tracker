@@ -52,6 +52,12 @@ public:
     
     MeshTracker tracker;
     
+    //setup of the virtual room
+    
+    ofPlanePrimitive floorPlane;
+    ofPlanePrimitive wallNegPlane;
+    ofPlanePrimitive wallPosPlane;
+    ofPlanePrimitive backWallPlane;
     // ofCamera trackingCamera;
     
     // ofxCv::KalmanPosition trackingKalman;
@@ -89,6 +95,14 @@ public:
     ofParameter<glm::vec3> pTrackingBoxRotation{ "Tracking Box Rotation", glm::vec3(0.,0.,0.), glm::vec3(-180.,-180.,-180.), glm::vec3(180.,180.,180.)};
     ofParameter<glm::vec3> pTrackingBoxSize{ "Tracking Box Size", glm::vec3(1.,1.,1.), glm::vec3(0.,0.,0.), glm::vec3(10.,10.,10.)};
     
-    ofParameterGroup pgRoot{"Tracking", pTrackingTimeout, pTrackingCameraPosition, pTrackingCameraRotation, pTrackingBoxPosition, pTrackingBoxRotation, pTrackingBoxSize, pTrackingStartPosition};
+    ofParameter<glm::vec3> pFloorPlanePosition{ "Floor Plane Position", glm::vec3(0.,0.,0.), glm::vec3(-10.,-10.,-10.), glm::vec3(10.,10.,10.)};
+   
+    ofParameter<glm::vec3> pWallNegXPlanePosition{ "Wall -X Plane Position", glm::vec3(0.,0.,0.), glm::vec3(-10.,-10.,-10.), glm::vec3(10.,10.,10.)};
+    
+    ofParameter<glm::vec3> pWallPosXPlanePosition{ "Wall +X Plane Position", glm::vec3(0.,0.,0.), glm::vec3(-10.,-10.,-10.), glm::vec3(10.,10.,10.)};
+    
+        ofParameter<glm::vec3> pBackWallPlane{ "Back Wall Plane Position", glm::vec3(0.,0.,0.), glm::vec3(-10.,-10.,-10.), glm::vec3(10.,10.,10.)};
+    
+    ofParameterGroup pgRoot{"Tracking", pTrackingTimeout, pTrackingCameraPosition, pTrackingCameraRotation, pTrackingBoxPosition, pTrackingBoxRotation, pTrackingBoxSize, pTrackingStartPosition, pFloorPlanePosition, pWallNegXPlanePosition, pWallPosXPlanePosition, pBackWallPlane};
     
 };

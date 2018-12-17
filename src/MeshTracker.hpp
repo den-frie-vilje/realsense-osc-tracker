@@ -90,10 +90,11 @@ public:
             float distV2Line = -1.0;
             
             auto pos = getPosition();
-            float line_dist = glm::distance2(localFloorPoint, pos);
+            float line_dist = glm::distance2(localFloorPoint, pos); //her defineres den linje, der tegner den vektor, som skal pege ned i jorden fra centerpunktet i trackerspheren, vinkelret til gulvet
             if (line_dist == 0) distV2Line = glm::distance2(v, localFloorPoint);
             else {
             float t = ((v.x - localFloorPoint.x) * (pos.x - localFloorPoint.x) + (v.y - localFloorPoint.y) * (pos.y - localFloorPoint.y) + (v.z - localFloorPoint.z) * (pos.z - localFloorPoint.z)) / line_dist;
+            
             t = ofClamp(t, 0.0, 1.0);
             distV2Line = glm::distance2(v, glm::vec3(localFloorPoint.x + t * (pos.x - localFloorPoint.x),
                                                      localFloorPoint.y + t * (pos.y - localFloorPoint.y),
@@ -162,7 +163,7 @@ public:
     }
     
     void set( float radius, int resolution){
-        kalman.init(1/10000000000., 1/10000000.); // inverse of (smoothness, rapidness);
+        kalman.init(1/10000000000., 1/10000000., true); // inverse of (smoothness, rapidness);
         radiusSet = radius;
         ofIcoSpherePrimitive::set(radius, resolution);
         radiusSquared = radius*radius;
@@ -268,6 +269,7 @@ public:
             head.getParent()->transformGL();
             ofSetColor(255,0,0,255);
             ofDrawLine(head.getPosition(), head.localFloorPoint);
+            //ofDrawRectangle(head.localFloorPoint.x, head.localFloorPoint.y, 80,80);
             ofSetColor(255,255);
             ofDrawBitmapString(ofToString(head.lastTrackPointWeighedCount), head.getPosition());
             ofDrawCone(head.localFloorPoint, 0.025, 0.05);
