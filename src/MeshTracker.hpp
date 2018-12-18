@@ -74,6 +74,7 @@ public:
     }
     
     float addTrackPoint(glm::vec3 & v){
+        
         float dist = distanceToHead2(v);
         float radiusSquaredScaled= radiusSquared * radiusSquaredScale;
         if(dist < radiusSquaredScaled){
@@ -88,10 +89,14 @@ public:
             // distance to line towards floor
             
             float distV2Line = -1.0;
-            
+            //et sted her defineres afstanden af den linje, der tegner vektoren, som skal pege ned i jorden fra centerpunktet i trackerspheren, vinkelret til gulvet
             auto pos = getPosition();
-            float line_dist = glm::distance2(localFloorPoint, pos); //her defineres den linje, der tegner den vektor, som skal pege ned i jorden fra centerpunktet i trackerspheren, vinkelret til gulvet
-            if (line_dist == 0) distV2Line = glm::distance2(v, localFloorPoint);
+            //std::cout<< "the position is " << pos << endl;
+            float line_dist = glm::distance2(localFloorPoint, pos);
+            //std::cout<< "the distance is " << line_dist << endl;
+            if (line_dist == 0){ distV2Line = glm::distance2(v, localFloorPoint);
+               //std::cout<< "the distance V2 Line is " << distV2Line << endl;}
+            }
             else {
             float t = ((v.x - localFloorPoint.x) * (pos.x - localFloorPoint.x) + (v.y - localFloorPoint.y) * (pos.y - localFloorPoint.y) + (v.z - localFloorPoint.z) * (pos.z - localFloorPoint.z)) / line_dist;
             
@@ -147,6 +152,7 @@ public:
                 auto gp = getGlobalPosition();
                 auto newFloorP = glm::inverse(getGlobalTransformMatrix()) * glm::vec4(gp.x, 0.0, gp.z, 1.0);
                 localFloorPoint = glm::vec3(newFloorP) / newFloorP.w;
+                //std::cout << "localFloorPoint is: " << localFloorPoint << endl;
                 lastTimeTracking = now;
                 ofLogNotice(ofGetTimestampString(timestampFormat)) << "TRACKER (" << id << ") END AFTER " << ofToString(now - firstTimeTracking);
                 firstTimeTracking = 0;
@@ -269,7 +275,7 @@ public:
             head.getParent()->transformGL();
             ofSetColor(255,0,0,255);
             ofDrawLine(head.getPosition(), head.localFloorPoint);
-            //ofDrawRectangle(head.localFloorPoint.x, head.localFloorPoint.y, 80,80);
+            //ofDrawRectangle(head.localFloorPoint.x, head.localFloorPoint.y, 1,1);
             ofSetColor(255,255);
             ofDrawBitmapString(ofToString(head.lastTrackPointWeighedCount), head.getPosition());
             ofDrawCone(head.localFloorPoint, 0.025, 0.05);

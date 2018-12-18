@@ -12,6 +12,11 @@ void ofApp::setup(){
     
     trackingMesh.setMode(OF_PRIMITIVE_POINTS);
     
+    
+    //OSC
+    
+    sender.setup("localhost", 12345);
+    
     //REALSENSE
     
     rs2::config cfg;
@@ -185,6 +190,14 @@ void ofApp::setup(){
 
 //--------------------------------------------------------------
 void ofApp::update(){
+    
+    //Osc time example
+    timeSent = ofGetElapsedTimef();
+    ofxOscMessage message;
+    message.setAddress("/time");
+    message.addFloatArg(timeSent);
+    sender.sendMessage(message);
+    std::cout <<  message << endl;
     
     // Get depth data from camera
     auto frames = pipe.wait_for_frames();
@@ -434,16 +447,18 @@ bool ofApp::imGui()
                 save("default");
             }
             
-            /* static bool guiShowTest;
+             static bool guiShowTest;
              ImGui::Checkbox("Show Test Window", &guiShowTest);
              if(guiShowTest)
              ImGui::ShowTestWindow();
-             */
+             
             
             ImGui::Separator();
             
+            for (auto pg : pgRoot){
+                ofxImGui::AddGroup(pg->castGroup(), mainSettings);
+            }
             
-            ofxImGui::AddGroup(pgRoot, mainSettings);
             
             ofxImGui::EndWindow(mainSettings);
         }

@@ -5,6 +5,7 @@
 #include "ofxImGui.h"
 #include "ofxCv.h"
 #include "MeshTracker.hpp"
+#include "ofxOsc.h"
 
 class ofApp : public ofBaseApp{
     
@@ -26,6 +27,11 @@ public:
     void gotMessage(ofMessage msg);
     void keycodePressed(ofKeyEventArgs& e);
     
+    
+    //OSC
+    
+    ofxOscSender sender;
+    float timeSent;
     
     // TRACKING
     
@@ -82,8 +88,7 @@ public:
     
     // PARAMETER
     
-//    ofParameter<bool> pTrackingEnabled{ "Enabled", false};
-//    ofParameter<bool> pTrackingVisible{ "Visible", false};
+    ofParameter<bool> pTrackingVisible{ "Visible", false};
     ofParameter<float> pTrackingTimeout{ "Timeout", 30.0, 0.0, 5*60.0};
     
     ofParameter<glm::vec3> pTrackingStartPosition{ "Start Position", glm::vec3(0.,0.,0.), glm::vec3(-10.,-10.,-10.), glm::vec3(10.,10.,10.)};
@@ -103,6 +108,22 @@ public:
     
         ofParameter<glm::vec3> pBackWallPlane{ "Back Wall Plane Position", glm::vec3(0.,0.,0.), glm::vec3(-10.,-10.,-10.), glm::vec3(10.,10.,10.)};
     
-    ofParameterGroup pgRoot{"Tracking", pTrackingTimeout, pTrackingCameraPosition, pTrackingCameraRotation, pTrackingBoxPosition, pTrackingBoxRotation, pTrackingBoxSize, pTrackingStartPosition, pFloorPlanePosition, pWallNegXPlanePosition, pWallPosXPlanePosition, pBackWallPlane};
+    ofParameterGroup pgTracking {"Tracking", pTrackingVisible, pTrackingTimeout, pTrackingCameraPosition, pTrackingCameraRotation, pTrackingBoxPosition, pTrackingBoxRotation, pTrackingBoxSize, pTrackingStartPosition, pFloorPlanePosition, pWallNegXPlanePosition, pWallPosXPlanePosition, pBackWallPlane};
+    
+    ofParameter<bool> pOscTrackingEnabled{ "Sending", false};
+    ofParameter<string> pOscTrackingRemoteAddress{ "Remote Address", "localhost"};
+    ofParameter<int> pOscTrackingRemotePort{ "Remote Port", 7777, 0, 65000};
+    ofParameterGroup pgOscTracking{ "Tracking", pOscTrackingEnabled, pOscTrackingRemoteAddress, pOscTrackingRemotePort };
+
+    
+    ofParameter<string> pOscQlabRemoteAddress{ "Remote Address", "localhost"};
+    ofParameter<int> pOscQlabRemotePort{ "Remote Port", 65000, 0, 65000};
+    ofParameter<int> pOscQlabReplyPort{ "Reply Port", 55000, 0, 65000};
+
+    ofParameterGroup pgQlab{"QLab", pOscQlabRemoteAddress, pOscQlabRemotePort, pOscQlabReplyPort };
+    
+    ofParameterGroup pgOsc {"OSC", pgQlab, pgOscTracking};
+
+    ofParameterGroup pgRoot{"Settings", pgOsc, pgTracking};
     
 };
