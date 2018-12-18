@@ -1,17 +1,1 @@
-{
-    "Settings": {
-        "Tracking": {
-            "Back_Wall_Plane_Position": "0, 3.5, 0",
-            "Floor_Plane_Position": "0, 0, 3.5",
-            "Start_Position": "0, 2, 3",
-            "Timeout": "90.423",
-            "Tracking_Box_Position": "0, 1.5, 2",
-            "Tracking_Box_Rotation": "0, 0, 0",
-            "Tracking_Box_Size": "6.5, 3.5, 4.5",
-            "Tracking_Camera_Position": "0, 1.5, 4.5",
-            "Tracking_Camera_Rotation": "0, 0, 0",
-            "Wall_+X_Plane_Position": "5, 2.5, 2",
-            "Wall_-X_Plane_Position": "-5, 2.5, 2"
-        }
-    }
-}
+{"Settings":{"OSC":{"QLab":{"Remote_Address":"localhost","Remote_Port":"65000","Reply_Port":"55000"},"Tracking":{"Remote_Address":"localhost","Remote_Port":"7777","Sending":"0"}},"Tracking":{"Back_Wall_Plane_Position":"0, 3.5, 0","Floor_Plane_Position":"0, 0, 3.5","Start_Position":"0, 2, 3","Timeout":"90.423","Tracking_Box_Position":"0, 1.5, 2","Tracking_Box_Rotation":"0, 0, 0","Tracking_Box_Size":"6.5, 3.5, 4.5","Tracking_Camera_Position":"0, 1.5, 4.5","Tracking_Camera_Rotation":"0, 0, 0","Visible":"0","Wall_+X_Plane_Position":"5, 2.5, 2","Wall_-X_Plane_Position":"-5, 2.5, 2"}}}

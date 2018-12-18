@@ -6,6 +6,7 @@
 #include "ofxCv.h"
 #include "MeshTracker.hpp"
 #include "ofxOsc.h"
+#include "qLabController.hpp"
 
 class ofApp : public ofBaseApp{
     
@@ -27,16 +28,16 @@ public:
     void gotMessage(ofMessage msg);
     void keycodePressed(ofKeyEventArgs& e);
     
-    
     //OSC
     
-    ofxOscSender sender;
+    ofxOscSender oscTrackingSender;
     float timeSent;
+    
+    qLabController qLab;
     
     // TRACKING
     
     rs2::pipeline pipe;
-    rs2::device device;
     rs2::pipeline_profile selection;
     rs2::colorizer color_map;
     rs2::frame colored_depth;
@@ -111,16 +112,16 @@ public:
     ofParameterGroup pgTracking {"Tracking", pTrackingVisible, pTrackingTimeout, pTrackingCameraPosition, pTrackingCameraRotation, pTrackingBoxPosition, pTrackingBoxRotation, pTrackingBoxSize, pTrackingStartPosition, pFloorPlanePosition, pWallNegXPlanePosition, pWallPosXPlanePosition, pBackWallPlane};
     
     ofParameter<bool> pOscTrackingEnabled{ "Sending", false};
-    ofParameter<string> pOscTrackingRemoteAddress{ "Remote Address", "localhost"};
+    ofParameter<string> pOscTrackingRemoteHost{ "Remote Host", "localhost"};
     ofParameter<int> pOscTrackingRemotePort{ "Remote Port", 7777, 0, 65000};
-    ofParameterGroup pgOscTracking{ "Tracking", pOscTrackingEnabled, pOscTrackingRemoteAddress, pOscTrackingRemotePort };
+    ofParameterGroup pgOscTracking{ "Tracking", pOscTrackingEnabled, pOscTrackingRemoteHost, pOscTrackingRemotePort };
 
     
-    ofParameter<string> pOscQlabRemoteAddress{ "Remote Address", "localhost"};
+    ofParameter<string> pOscQlabRemoteHost{ "Remote Address", "localhost"};
     ofParameter<int> pOscQlabRemotePort{ "Remote Port", 65000, 0, 65000};
     ofParameter<int> pOscQlabReplyPort{ "Reply Port", 55000, 0, 65000};
 
-    ofParameterGroup pgQlab{"QLab", pOscQlabRemoteAddress, pOscQlabRemotePort, pOscQlabReplyPort };
+    ofParameterGroup pgQlab{"QLab", pOscQlabRemoteHost, pOscQlabRemotePort, pOscQlabReplyPort };
     
     ofParameterGroup pgOsc {"OSC", pgQlab, pgOscTracking};
 
