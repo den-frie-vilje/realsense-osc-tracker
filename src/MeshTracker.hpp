@@ -8,12 +8,14 @@
 
 #include "ofMain.h"
 #include "ofxCv.h"
+#include "ofxOsc.h"
 
 
 class head : public ofIcoSpherePrimitive {
 
     string timestampFormat = "%Y-%m-%d %H:%M:%S.%i";
-
+    
+    
 public:
     enum class TRACKING_STATE {
         READY,
@@ -120,6 +122,7 @@ public:
                 if(isReady()) ofLogNotice(ofGetTimestampString(timestampFormat)) << "TRACKER (" << id << ") NEW";
                 if(isLost()) ofLogNotice(ofGetTimestampString(timestampFormat)) << "TRACKER (" << id << ") FOUND";
                 state = TRACKING_STATE::TRACKING;
+                
             }
             radiusSquaredScale = radiusSquaredScaleTracking;
             trackPointSum /= trackPointCount;
@@ -169,7 +172,7 @@ public:
     }
     
     void set( float radius, int resolution){
-        kalman.init(1/10000000000., 1/10000000., true); // inverse of (smoothness, rapidness);
+        kalman.init(1/10000000000., 1/10000000.); // inverse of (smoothness, rapidness);
         radiusSet = radius;
         ofIcoSpherePrimitive::set(radius, resolution);
         radiusSquared = radius*radius;
@@ -179,6 +182,8 @@ public:
         ofIcoSpherePrimitive::setRadius(radius);
         radiusSquared = radius*radius;
     }
+    
+
 
 private:
     float radiusSquared;
@@ -188,9 +193,8 @@ private:
 class MeshTracker : public ofBoxPrimitive{
 public:
     ofNode startingPoint;
-    
     ofNode camera;
-    
+
     float headRadius = 0.3/2.;
     vector<head> heads;
     
@@ -246,6 +250,7 @@ public:
     void update(){
         for(auto & head : heads){
             head.update(this->startingPoint);
+            
         }
         // make sure the first ones are the first.
         std::sort(heads.begin(), heads.end(), [](head a, head b) {
@@ -255,10 +260,31 @@ public:
         std::sort(heads.begin(), heads.end(), [](head a, head b) {
             return a.isTrackingOrLost() && !b.isTrackingOrLost();
         });
+        
+        
+        //OSC sending head position
+        /*auto headPosCoord = head.getPosition();
+        ofxOscMessage headPosMessage;*/
+        
+        /*headPosMessage.setAddress(id+"/pos");
+        headPosMessage.addFloatArg(headPosCoord);
+        sender.sendMessage(headPosMessage);
+        std::cout <<  headPosMessage << endl;*/
+        
+        /*timeSent = ofGetElapsedTimef();
+        ofxOscMessage message;
+        message.setAddress("/time");
+        message.addFloatArg(timeSent);
+        sender.sendMessage(message);
+        std::cout <<  message << endl;*/
+        
+     
+
 
     }
 
     void draw(){
+        ofPushMatrix();
         ofSetColor(255,255,255,255);
         this->drawWireframe();
         ofSetColor(255,0,255,255);
@@ -272,14 +298,40 @@ public:
                 ofSetColor(255,255,0,255);
             }
             head.drawWireframe();
-            head.getParent()->transformGL();
+            head.transformGL();
             ofSetColor(255,0,0,255);
-            ofDrawLine(head.getPosition(), head.localFloorPoint);
+            ofDrawLine(glm::vec3(0,0,0), head.localFloorPoint);
             //ofDrawRectangle(head.localFloorPoint.x, head.localFloorPoint.y, 1,1);
             ofSetColor(255,255);
-            ofDrawBitmapString(ofToString(head.lastTrackPointWeighedCount), head.getPosition());
+            ofDrawBitmapString(ofToString(head.lastTrackPointWeighedCount), glm::vec3(0,0,0));
             ofDrawCone(head.localFloorPoint, 0.025, 0.05);
-            head.getParent()->restoreTransformGL();
+            head.restoreTransformGL();
         }
+        ofPopMatrix();
     }
+    
+   /* void sendOsc(){
+        for(auto head : heads){
+            if(head.isTrackingOrLost()){
+                
+                //OSC sending head position
+                auto headPosCoord = head.getGlobalPosition();
+                ofxOscMessage headPosMessage;
+                
+                //int idAddress = head.id;
+                string idAddress = ofToString(head.id);
+                
+                headPosMessage.setAddress("/"+idAddress+"/pos");
+                headPosMessage.addFloatArg(headPosCoord.x);
+                headPosMessage.addFloatArg(headPosCoord.y);
+                headPosMessage.addFloatArg(headPosCoord.z);
+                sender.sendMessage(headPosMessage);
+                std::cout <<  "head coord xyz is: " << headPosCoord << endl;
+                
+            }
+            
+        }
+        
+    }*/
+    
 };

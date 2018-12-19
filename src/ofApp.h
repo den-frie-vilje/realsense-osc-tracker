@@ -6,6 +6,7 @@
 #include "ofxCv.h"
 #include "MeshTracker.hpp"
 #include "ofxOsc.h"
+#include <dispatch/dispatch.h>
 
 class ofApp : public ofBaseApp{
     
@@ -31,9 +32,13 @@ public:
     //OSC
     
     ofxOscSender sender;
-    float timeSent;
+    //float timeSent;
+    int port = 1234;
+
     
     // TRACKING
+    
+    dispatch_queue_t cropVerticesQueue;
     
     rs2::pipeline pipe;
     rs2::device device;
