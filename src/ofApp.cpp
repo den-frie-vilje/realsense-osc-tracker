@@ -462,6 +462,8 @@ bool ofApp::imGui()
              */
             
             ImGui::Separator();
+            
+            int columnOffset = 200;
 
             if(ofxImGui::BeginTree("Head Tracker OSC", mainSettings)){
                 
@@ -472,7 +474,7 @@ bool ofApp::imGui()
                     pOscTrackingRemoteHost.set(strHost);
                 }
 
-                ImGui::SetColumnOffset(1, ImGui::GetWindowContentRegionMax().x - 200);
+                ImGui::SetColumnOffset(1, ImGui::GetWindowContentRegionMax().x - columnOffset);
 
                 ImGui::NextColumn();
 
@@ -495,7 +497,7 @@ bool ofApp::imGui()
                     pOscQlabRemoteHost.set(strHost);
                 }
 
-                ImGui::SetColumnOffset(1, ImGui::GetWindowContentRegionMax().x - 200);
+                ImGui::SetColumnOffset(1, ImGui::GetWindowContentRegionMax().x - columnOffset);
 
                 ImGui::NextColumn();
                 
@@ -507,6 +509,8 @@ bool ofApp::imGui()
                 ImGui::Columns(1);
                 
                 ImGui::Columns(2, "qLabOscRemote", false);
+
+                ImGui::SetColumnOffset(1, ImGui::GetWindowContentRegionMax().x - columnOffset);
 
                 ImGui::NextColumn();
 
