@@ -7,6 +7,7 @@
 #include "MeshTracker.hpp"
 #include "ofxOsc.h"
 #include "qLabController.hpp"
+#include <dispatch/dispatch.h>
 
 class ofApp : public ofBaseApp{
     
@@ -30,14 +31,19 @@ public:
     
     //OSC
     
-    ofxOscSender oscTrackingSender;
-    float timeSent;
+    ofxOscSender sender;
+    //float timeSent;
+    int port = 1234;
+
     
     qLabController qLab;
     
     // TRACKING
     
+    dispatch_queue_t cropVerticesQueue;
+    
     rs2::pipeline pipe;
+    rs2::device device;
     rs2::pipeline_profile selection;
     rs2::colorizer color_map;
     rs2::frame colored_depth;
