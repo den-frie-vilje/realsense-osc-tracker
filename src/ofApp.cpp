@@ -12,11 +12,7 @@ void ofApp::setup(){
     trackingMesh.setMode(OF_PRIMITIVE_POINTS);
     
     cropVerticesQueue = dispatch_queue_create("Crop Vertices", DISPATCH_QUEUE_CONCURRENT);
-    
-    //OSC
-    
-    sender.setup("localhost", port);
-    
+        
     //REALSENSE
     rs2::config cfg;
     cfg.enable_stream(RS2_STREAM_DEPTH, 848, 480, RS2_FORMAT_ANY, 60);
@@ -94,11 +90,6 @@ void ofApp::setup(){
     } catch (exception e){
         ofLogError("SETUP", "No realsense camera found");
     }
-    
-    //GUI
-    
-    cam.setFarClip(50000.0);
-    //cam.setNearClip(0.01);
     
     ofAddListener(ofGetWindowPtr()->events().keyPressed, this,
                   &ofApp::keycodePressed);
@@ -189,27 +180,25 @@ void ofApp::setup(){
     trackingCamera.setFarClip(50.0);
     tracker.setup(3, pTrackingStartPosition, trackingCamera, origin );
     
+    //GUI
     
+    cam.setupPerspective();
+    cam.setParent(origin);
+    cam.setFarClip(50000.0);
+    cam.setNearClip(0.01);
+
     
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
-    
-    //FIXME: Glitches in update/draw using instruments?
 
-    
-    // Get depth data from camera
-    auto frames = pipe.wait_for_frames();
-    auto depthFrame = frames.get_depth_frame();
-    
-    rs2::frame filteredFrame = depthFrame; // make a copy
-    // Note the concatenation of output/input frame to build up a chain
-    filteredFrame = dec_filter.process(filteredFrame);
-    filteredFrame = spat_filter.process(filteredFrame);
-    filteredFrame = temp_filter.process(filteredFrame);
-    
-    points = pc.calculate(filteredFrame);
+    cam.setPosition(pTrackingBoxPosition.get().x+(pTrackingBoxSize.get().x/1.75),
+                    pTrackingBoxPosition.get().y+pTrackingBoxSize.get().y,
+                    (pTrackingBoxPosition.get().z+pTrackingBoxSize.get().z)*2.0);
+    cam.lookAt(tracker, glm::vec3(0.0,-1.0,0.0));
+
+    //FIXME: Glitches in update/draw using instruments?
     
     //TRACKER
     trackingCamera.setPosition(pTrackingCameraPosition);
@@ -225,29 +214,91 @@ void ofApp::update(){
     const auto cameraGlobalMat = trackingCamera.getGlobalTransformMatrix();
     const auto trackerInverse = glm::inverse(tracker.getGlobalTransformMatrix());
     
+    if(selection){
+        
+        rs2::frameset frames;
+        
+        if(pipe.poll_for_frames(&frames)){
+            
+            // Get depth data from camera
+            auto depthFrame = frames.get_depth_frame();
+            
+            rs2::frame filteredFrame = depthFrame; // make a copy
+            // Note the concatenation of output/input frame to build up a chain
+            filteredFrame = dec_filter.process(filteredFrame);
+            filteredFrame = spat_filter.process(filteredFrame);
+            filteredFrame = temp_filter.process(filteredFrame);
+            
+            points = pc.calculate(filteredFrame);
+            
+            // Create oF mesh
+            trackingMesh.clear();
+            int n = points.size();
+            if(n>0){
+                const rs2::vertex * vs = points.get_vertices();
+                for(int i=0; i<n; i++){
+                    if(vs[i].z>0.5){ // save time on skipping the closest ones
+                        const rs2::vertex v = vs[i];
+                        glm::vec3 v3(v.x,-v.y,-v.z);
+                        glm::vec4 cameraVec(v3, 1.0);
+                        glm::vec4 globalVec = cameraGlobalMat * cameraVec;
+                        
+                        auto inversedVec = trackerInverse * globalVec;
+                        glm::vec3 trackerVec = glm::vec3(inversedVec) / inversedVec.w;
+                        
+                        if(fabs(trackerVec.x) < tracker.getWidth()/2.0 &&
+                           fabs(trackerVec.y) < tracker.getHeight()/2.0 &&
+                           fabs(trackerVec.z) < tracker.getDepth()/2.0){
+                            
+                            int wasAdded = tracker.addVertex(v3);
+                            
+                            trackingMesh.addVertex(v3);
+                            
+                            ofFloatColor c;
+                            if(wasAdded == 0){
+                                c = ofFloatColor::lightGray;
+                            } else if (wasAdded == 1){
+                                c = ofFloatColor::cyan;
+                            } else if (wasAdded == 2){
+                                c= ofFloatColor::green;
+                            } else if (wasAdded == 3){
+                                c = ofFloatColor::blueSteel;
+                            }
+                            
+                            trackingMesh.addColor(c);
+                            
+                        }
+                    }
+                }
+                tracker.update();
+            }
+        }
+    }
     
-    
+    float roomWidth = fmax(fabs(pWallNegXPlanePosition.get().x), fabs(pWallPosXPlanePosition.get().x)) * 2.0;
+    float roomDepth = pFloorPlanePosition.get().z * 2.0;
+    float roomHeight = pBackWallPlane.get().y * 2.0;
     
     //setting the parameters for the plane
-    floorPlane.set(10.24, 7.20);   ///dimensions for width and height in pixels
+    floorPlane.set(roomWidth, roomDepth);   ///dimensions for width and height in pixels
     floorPlane.setOrientation(glm::vec3(90.,0.,0.));
     floorPlane.setGlobalPosition(pFloorPlanePosition); /// position in x y z
-    floorPlane.setResolution(2, 2);
+    //floorPlane.setResolution(2, 2);
     
-    wallNegPlane.set(5,5);
+    wallNegPlane.set(roomDepth,roomHeight);
     wallNegPlane.setGlobalPosition(pWallNegXPlanePosition);
     wallNegPlane.setOrientation(glm::vec3(0.,90.,0.));
-    wallNegPlane.setResolution(2, 2);
+    //wallNegPlane.setResolution(2, 2);
     
-    wallPosPlane.set(5,5);
+    wallPosPlane.set(roomDepth,roomHeight);
     wallPosPlane.setGlobalPosition(pWallPosXPlanePosition);
     wallPosPlane.setOrientation(glm::vec3(0.,90.,0.));
-    wallPosPlane.setResolution(2, 2);
+    //wallPosPlane.setResolution(2, 2);
     
-    backWallPlane.set(10.14,7.20);
+    backWallPlane.set(roomWidth,roomHeight);
     backWallPlane.setGlobalPosition(pBackWallPlane);
     backWallPlane.setOrientation(glm::vec3(0.,0.,0.));
-    wallNegPlane.setResolution(2, 2);
+    //wallNegPlane.setResolution(2, 2);
     
     
     // Create oF mesh
@@ -282,9 +333,7 @@ void ofApp::update(){
                 }
             }
         });
-        
-        cout << "queue done" << endl;
-
+                
         for(int i=0; i<n; i++){
             
             const rs2::vertex & v = vs[i];
@@ -317,50 +366,45 @@ void ofApp::update(){
         
         
         tracker.update();
-    // OSC
-    if(oscTrackingSender.getHost() != pOscTrackingRemoteHost.get() ||
-       oscTrackingSender.getPort() != pOscTrackingRemotePort.get()
-       ){
-        cout << "setting oscTrackingSender ";
-        oscTrackingSender.clear();
-        oscTrackingSender.setup(pOscTrackingRemoteHost.get(), pOscTrackingRemotePort.get());
-        cout << oscTrackingSender.getHost() << ":";
-        cout << oscTrackingSender.getPort() << endl;
-    }
-    
-    //osc
-    
-    for (auto & head : tracker.heads) {
-        if(head.isTrackingOrLost()){
-            
-            //OSC sending head position
-            auto headPosCoord = head.getGlobalPosition();
-            
-            ofxOscMessage headPosMessage;
-            
-            //int idAddress = head.id;
-            string idAddress = ofToString(head.id);
-            
-            headPosMessage.setAddress("/"+idAddress+"/pos");
-            headPosMessage.addFloatArg(headPosCoord.x);
-            headPosMessage.addFloatArg(headPosCoord.y);
-            headPosMessage.addFloatArg(headPosCoord.z);
-            sender.sendMessage(headPosMessage);
-            std::cout <<  "head coord xyz is: " << headPosCoord << endl;
-            
+        // OSC
+        if(oscTrackingSender.getHost() != pOscTrackingRemoteHost.get() ||
+           oscTrackingSender.getPort() != pOscTrackingRemotePort.get()
+           ){
+            //cout << "setting oscTrackingSender ";
+            oscTrackingSender.clear();
+            oscTrackingSender.setup(pOscTrackingRemoteHost.get(), pOscTrackingRemotePort.get());
+            //cout << oscTrackingSender.getHost() << ":";
+            //cout << oscTrackingSender.getPort() << endl;
         }
         
+        //osc
+        
+        for (auto & head : tracker.heads) {
+            if(head.isTrackingOrLost()){
+                
+                //OSC sending head position
+                auto headPosCoord = head.getGlobalPosition();
+
+                ofxOscMessage oscMessage;
+                
+                //int idAddress = head.id;
+                string idAddress = ofToString(head.id);
+                oscMessage.setAddress("/tracker/"+idAddress+"/head/position");
+                oscMessage.addFloatArg(headPosCoord.x);
+                oscMessage.addFloatArg(headPosCoord.y);
+                oscMessage.addFloatArg(headPosCoord.z);
+                oscTrackingSender.sendMessage(oscMessage);
+
+                oscMessage.setAddress("/tracker/"+idAddress+"/floor/position");
+                oscMessage.addFloatArg(headPosCoord.x);
+                oscMessage.addFloatArg(0.0);
+                oscMessage.addFloatArg(headPosCoord.z);
+                oscTrackingSender.sendMessage(oscMessage);
+
+            }
+            
+        }
     }
-    /*
-     //Osc time example
-     timeSent = ofGetElapsedTimef();
-     ofxOscMessage message;
-     message.setAddress("/time");
-     message.addFloatArg(timeSent);
-     sender.sendMessage(message);
-     //std::cout <<  message << endl;
-     */
-    
 }
 
 
@@ -375,7 +419,7 @@ void ofApp::draw(){
     
     cam.begin(); {
         
-        ofScale(ofGetWidth());  //1024 pixels
+        //ofScale(ofGetWidth());  //1024 pixels
         
         ofDrawAxis(1.0); //Global axis
         
@@ -383,19 +427,30 @@ void ofApp::draw(){
         
         ofEnableDepthTest();
         
-        trackingCamera.transformGL();
-        trackingMesh.draw();
-        trackingCamera.restoreTransformGL();
+        ofSetColor(90, 255);
         
-        trackingCamera.drawFrustum();
+        floorPlane.drawWireframe();
+        backWallPlane.drawWireframe();
+        wallNegPlane.drawWireframe();
+        wallPosPlane.drawWireframe();
         
-        tracker.draw();
+        ofSetColor(255, 64);
         
-        ofSetColor(100, 100);
         floorPlane.draw();
+        backWallPlane.draw();
         wallNegPlane.draw();
         wallPosPlane.draw();
-        backWallPlane.draw();
+        
+        if(pTrackingVisible){
+            ofDisableDepthTest();
+            trackingCamera.transformGL();
+            trackingMesh.draw();
+            trackingCamera.restoreTransformGL();
+            ofEnableDepthTest();
+            trackingCamera.drawFrustum();
+        }
+        tracker.draw();
+        
         
     } cam.end();
     
@@ -476,7 +531,7 @@ void ofApp::gotMessage(ofMessage msg){
 }
 
 //--------------------------------------------------------------
-void ofApp::dragEvent(ofDragInfo dragInfo){ 
+void ofApp::dragEvent(ofDragInfo dragInfo){
     
 }
 
@@ -494,7 +549,7 @@ void ofApp::load(string name){
 bool ofApp::imGui()
 {
     //TODO: Merge GUI code from Ole
-
+    
     auto mainSettings = ofxImGui::Settings();
     
     ofDisableDepthTest();
@@ -543,30 +598,30 @@ bool ofApp::imGui()
             ImGui::Separator();
             
             int columnOffset = 200;
-
+            
             if(ofxImGui::BeginTree("Head Tracker OSC", mainSettings)){
                 
                 ImGui::Columns(2, "HeadTrackerOSCColumns", false);
-
+                
                 string strHost = pOscTrackingRemoteHost.get();
                 if(ImGui::InputTextFromString("Remote Host", strHost, ImGuiInputTextFlags_CharsNoBlank)){
                     pOscTrackingRemoteHost.set(strHost);
                 }
-
+                
                 ImGui::SetColumnOffset(1, ImGui::GetWindowContentRegionMax().x - columnOffset);
-
+                
                 ImGui::NextColumn();
-
+                
                 string strPort = ofToString(pOscTrackingRemotePort.get());
                 if(ImGui::InputTextFromString("Remote Port", strPort, ImGuiInputTextFlags_CharsDecimal)){
                     pOscTrackingRemotePort.set(ofToInt(string(strPort)));
                 }
                 
                 ImGui::Columns(1);
-
+                
                 ofxImGui::EndTree(mainSettings);
             }
-
+            
             if(ofxImGui::BeginTree("qLab OSC", mainSettings)){
                 
                 ImGui::Columns(2, "qLabOscColumns", false);
@@ -575,9 +630,9 @@ bool ofApp::imGui()
                 if(ImGui::InputTextFromString("Remote Host", strHost, ImGuiInputTextFlags_CharsNoBlank)){
                     pOscQlabRemoteHost.set(strHost);
                 }
-
+                
                 ImGui::SetColumnOffset(1, ImGui::GetWindowContentRegionMax().x - columnOffset);
-
+                
                 ImGui::NextColumn();
                 
                 string strPort = ofToString(pOscQlabRemotePort.get());
@@ -588,11 +643,11 @@ bool ofApp::imGui()
                 ImGui::Columns(1);
                 
                 ImGui::Columns(2, "qLabOscRemote", false);
-
+                
                 ImGui::SetColumnOffset(1, ImGui::GetWindowContentRegionMax().x - columnOffset);
-
+                
                 ImGui::NextColumn();
-
+                
                 string strPortReply = ofToString(pOscQlabReplyPort.get());
                 if(ImGui::InputTextFromString("Reply Port", strPortReply, ImGuiInputTextFlags_CharsDecimal)){
                     pOscQlabReplyPort.set(ofToInt(string(strPortReply)));
@@ -602,7 +657,7 @@ bool ofApp::imGui()
                 
                 ofxImGui::EndTree(mainSettings);
             }
-
+            
             
             /*
              for (auto pg : pgRoot){

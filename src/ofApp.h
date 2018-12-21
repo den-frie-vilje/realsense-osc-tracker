@@ -31,7 +31,7 @@ public:
     
     //OSC
     
-    ofxOscSender sender;
+    ofxOscSender oscTrackingSender;
     //float timeSent;
     int port = 1234;
 
