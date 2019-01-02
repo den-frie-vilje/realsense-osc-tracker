@@ -34,7 +34,6 @@ public:
     ofxOscSender oscTrackingSender;
     //float timeSent;
     int port = 1234;
-
     
     qLabController qLab;
     
@@ -62,6 +61,8 @@ public:
     ofMesh trackingMesh;
     
     ofCamera trackingCamera;
+    
+    bool resetCameraPosition = true;
     
     MeshTracker tracker;
     

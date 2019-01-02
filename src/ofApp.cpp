@@ -193,10 +193,16 @@ void ofApp::setup(){
 //--------------------------------------------------------------
 void ofApp::update(){
 
-    cam.setPosition(pTrackingBoxPosition.get().x+(pTrackingBoxSize.get().x/1.75),
-                    pTrackingBoxPosition.get().y+pTrackingBoxSize.get().y,
-                    (pTrackingBoxPosition.get().z+pTrackingBoxSize.get().z)*2.0);
-    cam.lookAt(tracker, glm::vec3(0.0,-1.0,0.0));
+    
+    ofVec3f position = cam.getPosition();
+    ofVec3f basePosition = ofVec3f(0, 0, cam.getDistance());
+    if(position == basePosition) {
+        cam.setPosition(pTrackingBoxPosition.get().x+(pTrackingBoxSize.get().x/1.75),
+                        pTrackingBoxPosition.get().y+pTrackingBoxSize.get().y,
+                        (pTrackingBoxPosition.get().z+pTrackingBoxSize.get().z)*2.0);
+        cam.lookAt(tracker, glm::vec3(0.0,-1.0,0.0));
+        resetCameraPosition = false;
+    }
 
     //FIXME: Glitches in update/draw using instruments?
     
@@ -451,10 +457,7 @@ void ofApp::draw(){
         }
         tracker.draw();
         
-        
     } cam.end();
-    
-    
     
     // GUI
     ofEnableBlendMode(OF_BLENDMODE_ALPHA);
@@ -466,7 +469,6 @@ void ofApp::draw(){
     } else {
         cam.enableMouseInput();
     }
-    
     
 }
 
@@ -522,7 +524,7 @@ void ofApp::mouseExited(int x, int y){
 
 //--------------------------------------------------------------
 void ofApp::windowResized(int w, int h){
-    
+
 }
 
 //--------------------------------------------------------------
@@ -579,7 +581,12 @@ bool ofApp::imGui()
             ImGui::PopStyleVar();
             ImGui::Columns(1);
             
-            
+
+            if(!selection){
+                ImGui::Separator();
+                ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "CONNECT CAMERA AND RESTART APP");
+            }
+
             ImGui::Separator();
             
             if(ImGui::Button("Load")){
@@ -589,12 +596,13 @@ bool ofApp::imGui()
                 save("default");
             }
             
+            /*
             static bool guiShowTest;
             ImGui::Checkbox("Show Test Window", &guiShowTest);
             if(guiShowTest)
                 ImGui::ShowTestWindow();
             
-            
+            */
             ImGui::Separator();
             
             int columnOffset = 200;
